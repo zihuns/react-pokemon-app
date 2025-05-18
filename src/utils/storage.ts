@@ -1,14 +1,14 @@
 const storage = {
-  set: (key, value) => {
+  set: (key: string, value: any) => {
     localStorage.setItem(key, JSON.stringify(value));
   },
 
-  get: (key, defaultValue) => {
+  get: <T>(key: string, defaultValue?: T): T => {
     const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : defaultValue;
+    return (value ? JSON.parse(value) : defaultValue) as T;
   },
 
-  remove: (key) => {
+  remove: (key: string) => {
     localStorage.removeItem(key);
   },
 };
