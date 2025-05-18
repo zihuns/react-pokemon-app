@@ -1,53 +1,50 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-import styled from "styled-components";
-import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signOut,
-} from "firebase/auth";
-import app from "../firebase";
+import React, { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router';
+import styled from 'styled-components'
+import { User, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
+import app from '../firebase';
+import storage from '../utils/storage';
 
-const initialUserData = localStorage.getItem("userData")
-  ? JSON.parse(localStorage.getItem("userData"))
-  : {};
+const initialUserData = storage.get<User>('userData');
 
 const NavBar = () => {
-  const auth = getAuth(app);
+
+
+  const auth = getAuth(app)
   const provider = new GoogleAuthProvider();
 
   const [show, setShow] = useState(false);
 
-  const [userData, setUserData] = useState(initialUserData);
+  const [userData, setUserData] = useState<User | null>(initialUserData);
 
   const { pathname } = useLocation();
   const navigate = useNavigate();
   useEffect(() => {
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         navigate("/login");
       } else if (user && pathname === "/login") {
         navigate("/");
       }
-    });
+    })
 
     return () => {
       unsubscribe();
-    };
-  }, [pathname]);
+    }
+  }, [pathname])
 
   const handleAuth = () => {
     signInWithPopup(auth, provider)
-      .then((result) => {
+      .then(result => {
         setUserData(result.user);
-        localStorage.setItem("userData", JSON.stringify(result.user));
+        storage.set("userData", result.user);
+        // localStorage.setItem("userData", JSON.stringify(result.user));
       })
-      .catch((error) => {
+      .catch(error => {
         console.error(error);
-      });
-  };
+      })
+  }
 
   const listener = () => {
     if (window.scrollY > 50) {
@@ -55,26 +52,27 @@ const NavBar = () => {
     } else {
       setShow(false);
     }
-  };
+  }
 
   useEffect(() => {
-    window.addEventListener("scroll", listener);
+    window.addEventListener('scroll', listener);
 
     return () => {
-      window.removeEventListener("scroll", listener);
-    };
-  }, []);
+      window.removeEventListener('scroll', listener);
+    }
+  }, [])
 
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        localStorage.removeItem("userData");
+        // localStorage.removeItem('userData');
+        storage.remove('userData');
         setUserData(null);
       })
-      .catch((error) => {
+      .catch(error => {
         alert(error.message);
-      });
-  };
+      })
+  }
 
   return (
     <NavWrapper show={show}>
@@ -86,27 +84,36 @@ const NavBar = () => {
         />
       </Logo>
 
-      {pathname === "/login" ? (
-        <Login onClick={handleAuth}>로그인</Login>
-      ) : (
+      {pathname === '/login' ?
+        (
+          <Login onClick={handleAuth}>로그인</Login>
+        ) :
+
         <SignOut>
-          {userData?.photoURL && (
-            <UserImg src={userData.photoURL} alt="user photo" />
-          )}
+          {userData?.photoURL
+            &&
+            <UserImg
+              src={userData.photoURL}
+              alt="user photo"
+            />
+          }
           <Dropdown>
             <span onClick={handleLogout}> Sign out</span>
           </Dropdown>
         </SignOut>
-      )}
+      }
+
     </NavWrapper>
-  );
-};
+  )
+}
+
 
 const UserImg = styled.img`
   border-radius: 50%;
   width: 100%;
   height: 100%;
-`;
+`
+
 
 const Dropdown = styled.div`
   position: absolute;
@@ -122,7 +129,7 @@ const Dropdown = styled.div`
   width: 100px;
   opacity: 0;
   color: white;
-`;
+`
 
 const SignOut = styled.div`
   position: relative;
@@ -133,16 +140,17 @@ const SignOut = styled.div`
   align-items: center;
   justify-content: center;
 
-  &:hover {
+  &:hover  {
     ${Dropdown} {
       opacity: 1;
       transition-duration: 1s;
     }
   }
-`;
+
+`
 
 const Login = styled.a`
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0,0,0,0.6);
   padding: 8px 16px;
   text-transform: uppercase;
   letter-spacing: 1.55px;
@@ -156,7 +164,8 @@ const Login = styled.a`
     color: #000;
     border-color: transparent;
   }
-`;
+
+`
 
 const Image = styled.img`
   cursor: pointer;
@@ -167,21 +176,21 @@ const Logo = styled.a`
   padding: 0;
   width: 50px;
   margin-top: 4px;
-`;
+`
 
-const NavWrapper = styled.nav`
+const NavWrapper = styled.nav<{ show: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 70px;
   display: flex;
-  background-color: ${(props) => (props.show ? "#090b13" : "transparent")};
+  background-color: ${props => props.show ? "#090b13" : "transparent"};
   justify-content: space-between;
   align-items: center;
   padding: 0 36px;
   letter-spacing: 16px;
   z-index: 100;
-`;
+`
 
-export default NavBar;
+export default NavBar
